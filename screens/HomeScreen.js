@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, Image, StatusBar, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Image, StatusBar, Dimensions, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Easing } from 'react-native';
 import Header from '../components/Header';
 import FeatureCard from '../components/FeatureCard';
 import FloatingButton from '../components/FloatingButton';
+import FeatureCardWithDetails from '../components/FeatureCardWithDetails';
 
 const { width } = Dimensions.get('window'); // Get screen width
 
@@ -12,6 +13,7 @@ const HomeScreen = () => {
   const rotateValue = useRef(new Animated.Value(0)).current;
   const [isRotatingFast, setIsRotatingFast] = useState(false);
   const [coinCount, setCoinCount] = useState(122);
+
   // Gradient rotation animation
   useEffect(() => {
     Animated.loop(
@@ -45,6 +47,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
       {/* Header */}
       <Header coinCount={coinCount} />
 
@@ -86,25 +89,45 @@ const HomeScreen = () => {
           <TouchableOpacity style={styles.createButton} onPress={handleButtonPress}>
             <Text style={styles.createButtonText}>Create</Text>
           </TouchableOpacity>
-
         </View>
       </View>
 
-      {/* Feature Cards */}
-      <View style={styles.featureRow}>
-        <FeatureCard title="Speech to Image" description="Convert your Speech into stunning Image." />
-        <FeatureCard title="Speech to Video" description="Convert your Speech into stunning Video." />
-      </View>
-      <View style={styles.featureRow}>
-        <FeatureCard title="Speech to Music" description="Convert your Speech into stunning Music." />
-        <FeatureCard title="Speech to Ppt" description="Convert your Speech into stunning Text." />
-      </View>
-      <FloatingButton/>
-    </View>
+      {/* Scrollable Content */}
+        {/* Feature Cards */}
+        <View style={styles.featureRow}>
+          <FeatureCard
+            title="Speech to Image"
+            description="Convert your Speech into stunning Image."
+            iconSource={require('../assets/card/image.png')} // Pass your icon source here
+          />
+          <FeatureCard
+            title="Speech to Video"
+            description="Convert your Speech into stunning Video."
+            iconSource={require('../assets/card/video.png')} // Pass your icon source here
+          />
+        </View>
 
+        <View style={styles.featureRow}>
+          <FeatureCard
+            title="Speech to Music"
+            description="Convert your Speech into stunning Music."
+            iconSource={require('../assets/card/music.png')} // Pass your icon source here
+          />
+          <FeatureCard
+            title="Speech to Ppt"
+            description="Convert your Speech into stunning Text."
+            iconSource={require('../assets/card/ppt.png')} // Pass your icon source here
+          />
+        </View>
+
+        <FeatureCardWithDetails />
+      </ScrollView>
+
+      {/* Floating Button Outside the Scroll */}
+      <FloatingButton />
+    </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -114,9 +137,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 50,
+
+ 
   },
   welcomeText: {
     fontSize: 18,
@@ -126,32 +148,15 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-
   },
   columnContainer: {
     flexDirection: 'column',
     alignItems: 'start',
-
   },
   voiceChangeText: {
     fontSize: 10,  // Smaller font size
     color: '#FFF',
     marginLeft: 5,  // Optional: Adjust space between the two texts
-  },
-
-  coinContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  coinIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 5,
-  },
-  coinText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF6600',
   },
   content: {
     marginTop: 20,
@@ -165,7 +170,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   animatedGradientContainer: {
     position: 'absolute',
@@ -182,7 +187,6 @@ const styles = StyleSheet.create({
     top: 20,
     left: 20,
   },
-
   micContainer: {
     width: 40,
     height: 40,
@@ -226,7 +230,7 @@ const styles = StyleSheet.create({
   featureRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
   },
   card: {
     width: '48%',
@@ -248,6 +252,9 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 12,
     color: '#666',
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Add some space at the bottom for the floating button
   },
 });
 

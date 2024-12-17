@@ -26,15 +26,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginTop: 50,
+    marginTop: 15,
   },
   rowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   icon: {
-    width: 25,
-    height: 25,
+    width: 35,
+    height: 35,
     marginRight: 10, // Space between icon and text
   },
   welcomeText: {
