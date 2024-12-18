@@ -1,171 +1,136 @@
-import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Text,
-  TextInput,
-} from 'react-native';
-import { Button, IconButton, useTheme } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
-const LoginScreens = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [screen, setScreen] = useState(1); // 1: Initial, 2: OTP, 3: Register, 4: Verification
-
-  const handleNext = () => {
-    if (screen === 1) setScreen(2); // Proceed to OTP screen
-    else if (screen === 2) setScreen(3); // Proceed to registration
-    else if (screen === 3) setScreen(4); // Proceed to verification
-  };
-
+const LoginScreen = ({ navigation }) => {
   return (
-    <KeyboardAvoidingView style={styles.container}>
-      {screen === 1 && (
-        <View style={styles.screen}>
-          <Icon name="person-outline" size={100} color="#2274F0" />
-          <Text style={styles.heading}>Log in and unlock the digital universe</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Phone Number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-          />
-          <Button mode="contained" onPress={handleNext} style={styles.button}>
-            Get OTP
-          </Button>
-        </View>
-      )}
-      {screen === 2 && (
-        <View style={styles.screen}>
-          <Icon name="lock-outline" size={100} color="#2274F0" />
-          <Text style={styles.heading}>Enter 6 Digits Code</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter OTP"
-            value={otp}
-            onChangeText={setOtp}
-            keyboardType="number-pad"
-          />
-          <Button mode="contained" onPress={handleNext} style={styles.button}>
-            Verify
-          </Button>
-        </View>
-      )}
-      {screen === 3 && (
-        <View style={styles.screen}>
-          <Icon name="person-add-outline" size={100} color="#2274F0" />
-          <Text style={styles.heading}>Phone number not registered</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Your Name"
-            value={name}
-            onChangeText={setName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Your Age"
-            value={age}
-            onChangeText={setAge}
-            keyboardType="numeric"
-          />
-          <View style={styles.genderSelection}>
-            {['Male', 'Female', 'Others'].map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={[
-                  styles.genderButton,
-                  gender === item && styles.selectedGender,
-                ]}
-                onPress={() => setGender(item)}
-              >
-                <Text
-                  style={[
-                    styles.genderText,
-                    gender === item && styles.selectedGenderText,
-                  ]}
-                >
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Button mode="contained" onPress={handleNext} style={styles.button}>
-            Register
-          </Button>
-        </View>
-      )}
-      {screen === 4 && (
-        <View style={styles.screen}>
-          <Icon name="verified-user-outline" size={100} color="#2274F0" />
-          <Text style={styles.heading}>You are verified!</Text>
-        </View>
-      )}
-    </KeyboardAvoidingView>
+    <View style={styles.container}>
+      {/* Logo Image */}
+      <Image
+        source={require('../assets/logo.png')} // Replace with your logo path
+        style={styles.logo}
+      />
+
+      {/* Welcome Text */}
+      <Text style={styles.title}>Let's Get Started!</Text>
+
+      {/* Social Login Buttons */}
+      <TouchableOpacity style={styles.socialButton}>
+        <Image source={require('../assets/facebook.png')} style={styles.icon} />
+        <Text style={styles.buttonText}>Continue with Facebook</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.socialButton}>
+        <Image source={require('../assets/google.png')} style={styles.icon} />
+        <Text style={styles.buttonText}>Continue with Google</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.socialButton}>
+        <Image source={require('../assets/apple.png')} style={styles.icon} />
+        <Text style={styles.buttonText}>Continue with Apple</Text>
+      </TouchableOpacity>
+
+      {/* Or Separator */}
+      <Text style={styles.orText}>or</Text>
+
+      {/* Phone Login Button */}
+      <TouchableOpacity style={styles.phoneButton} onPress={() => navigation.navigate('OTPScreen')}>
+        <Text style={styles.phoneButtonText}>Sign in with Phone</Text>
+      </TouchableOpacity>
+
+      {/* Footer */}
+      <Text style={styles.footerText}>
+        Don’t have an account?{' '}
+        <Text style={styles.signUpText} onPress={() => navigation.navigate('SignUpDetails')}>
+          Sign up
+        </Text>
+      </Text>
+
+      <View style={styles.footerLinks}>
+        <Text style={styles.footerLink}>Privacy Policy  </Text>
+        <Text style={styles.footerLink}>  Term of Service</Text>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-  },
-  screen: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
   },
-  heading: {
+  logo: {
+    width: 200,
+    height: 200,
+    marginBottom: 10,
+    resizeMode: 'contain',
+  },
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
     marginBottom: 20,
   },
-  input: {
-    width: '100%',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: '#2274F0',
-    width: '100%',
-    paddingVertical: 10,
-  },
-  genderSelection: {
+  socialButton: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    padding: 10,
+    width: '90%',
+    marginVertical: 5,
+    borderRadius: 10, // Ensures rounded corners
+    
+    borderWidth: 1, // Adds a visible border
+    borderColor: '#CCCCCCE8', // Sets the border color to a light gray
+},
+
+  icon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
-  genderButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-  },
-  selectedGender: {
-    backgroundColor: '#2274F0',
-    borderColor: '#2274F0',
-  },
-  genderText: {
+  buttonText: {
     fontSize: 16,
-    color: '#333',
+    fontWeight: 'bold',
   },
-  selectedGenderText: {
+  orText: {
+    marginVertical: 10,
+    fontSize: 16,
+    color: '#888',
+  },
+  phoneButton: {
+    backgroundColor: '#2274F0',
+    width: '90%',
+    padding: 15,
+    borderRadius: 30,
+    alignItems: 'center',
+  },
+  phoneButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  footerText: {
+    marginTop: 20,
+    fontSize: 14,
+    color: '#888',
+  },
+  signUpText: {
+    color: '#2274F0',
+    fontWeight: 'bold',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+    width: '100%',
+  },
+  footerLink: {
+    fontSize: 12,
+    color: '#888',
   },
 });
 
-export default LoginScreens;
+export default LoginScreen;

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Image
 
 const { width, height } = Dimensions.get('window');
 
-const OnboardingScreen = ({ onFinish }) => {
+const OnboardingScreen = ({ navigation,onFinish }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollViewRef = useRef(null);
 
@@ -35,9 +35,10 @@ const OnboardingScreen = ({ onFinish }) => {
             scrollViewRef.current.scrollTo({ x: (currentIndex + 1) * width, animated: true });
             setCurrentIndex(currentIndex + 1);
         } else {
-            onFinish();
+            navigation.replace('Login'); // Use navigation prop here
         }
     };
+
 
     const handleScroll = (event) => {
         const scrollPosition = event.nativeEvent.contentOffset.x;
