@@ -10,6 +10,7 @@ import PhoneLoginScreen from './screens/PhoneLoginScreen';
 import SignUpDetailsScreen from './screens/SignUpDetailsScreen';
 import OTPCodeScreen from './screens/OTPCodeScreen';
 import AudioVideoUploadScreen from './screens/AudioVideoUploadScreen';
+import TranslateScreen from './screens/TranslateScreen';
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -35,6 +36,7 @@ const App = () => {
                 <Stack.Screen name="SignUpDetails" component={SignUpDetailsScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="OTPCode" component={OTPCodeScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="TranslateScreen" component={AudioVideoUploadScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="TranslateScreen2" component={TranslateScreen} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>
     );

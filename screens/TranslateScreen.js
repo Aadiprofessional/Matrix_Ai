@@ -13,34 +13,51 @@ const TranslateScreen = ({ route, navigation }) => {
   const [transcription, setTranscription] = useState('');
   const [loading, setLoading] = useState(false);
 
+  
   const handleTranscription = async () => {
     setLoading(true);
     const apiKey = 'CNrbioktfZ9k9r2iTUlLVrvbLg0Mqosr5gMT1PqNGisPhAskBsUIJQQJ99ALACfhMk5XJ3w3AAAAACOGITSp';
-    const endpoint = 'https://matri-m4rzc7ft-swedencentral.openai.azure.com/openai/deployments/whisper/models/transcriptions?api-version=2024-03-15-preview';
-
+    const endpoint = 'https://swedencentral.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US';
+  
     try {
       const formData = new FormData();
       formData.append('file', {
-        uri: file.uri,
-        type: file.type,
-        name: file.name,
+        uri: file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`, // Ensure proper URI format
+        type: file.type || 'audio/wav', // Specify accurate MIME type
+        name: file.name || 'audio.wav', // File name with extension
       });
-
-      const response = await axios.post(endpoint, formData, {
+  
+      // Use fetch for better compatibility in React Native
+      const response = await fetch(endpoint, {
+        method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
           'Ocp-Apim-Subscription-Key': apiKey,
         },
+        body: formData,
       });
-
-      setTranscription(response.data.text);
+  
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      console.log('Transcription Response:', data);
+      setTranscription(data.DisplayText || 'No transcription found.');
     } catch (error) {
       console.error('Error transcribing audio:', error);
-      setTranscription('Failed to transcribe the audio.');
+      if (error.response) {
+        setTranscription(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      } else {
+        setTranscription('Failed to transcribe the audio. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
+  
+  
+      
 
   return (
     <View style={styles.container}>
