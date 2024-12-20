@@ -13,7 +13,10 @@ import DocumentPicker from 'react-native-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import RNFS from 'react-native-fs';  // Import react-native-fs to read files
-import RNFetchBlob from 'react-native-blob-util';
+import axios from 'axios';
+import { Buffer } from 'buffer';
+
+
 const audioIcon = require('../assets/mic3.png');
 const videoIcon = require('../assets/cliper.png');
 const backIcon = require('../assets/back.png');
@@ -77,10 +80,12 @@ const AudioVideoUploadScreen = () => {
             const localFilePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
             await RNFS.copyFile(fileUri, localFilePath);
     
+            console.log('File saved at: ', localFilePath);  // Log the file path
+    
             const newFile = {
                 id: Date.now(),
                 name: fileName,
-                uri: localFilePath, // Use the local file path
+                uri: localFilePath,  // Use the local file path
                 type: fileType,
             };
     
@@ -90,79 +95,60 @@ const AudioVideoUploadScreen = () => {
         } catch (err) {
             if (DocumentPicker.isCancel(err)) {
                 console.log('User cancelled file picker.');
+            } else if (err instanceof Error) {
+                console.error('Error picking file:', err.message);
+                alert('An error occurred while picking the file. Please try again.');
             } else {
                 console.error('Unknown error:', err);
-                alert('An error occurred while picking the file. Please try again.');
             }
         }
     };
-    
-    
 
     const handleTranscription = async (file) => {
         setLoading(true);
         const apiKey = 'CNrbioktfZ9k9r2iTUlLVrvbLg0Mqosr5gMT1PqNGisPhAskBsUIJQQJ99ALACfhMk5XJ3w3AAAAACOGITSp';
         const endpoint = 'https://swedencentral.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US';
-    
+        
         try {
-            let filePath = file.uri;
+            const filePath = file.uri;
+            const exists = await RNFS.exists(filePath);
+            if (!exists) throw new Error('File not found or invalid path.');
     
-            // Log file details for debugging
-            console.log('Selected file details:', {
-                name: file.name,
-                type: file.type,
-                uri: file.uri,
-            });
-    
-            // Validate file path
-            const exists = await RNFetchBlob.fs.exists(filePath);
-            if (!exists) {
-                throw new Error('File not found or invalid path.');
-            }
-    
-            // Read file as binary
-            const fileData = await RNFetchBlob.fs.readFile(filePath, 'base64');
-            const binaryData = RNFetchBlob.base64.decode(fileData);
-    
-            // Log the file content type and binary data length for debugging
-            console.log('Sending request with content type:', file.type);
-            console.log('Binary data length:', binaryData.length);
-    
-            // Set content type based on file type
             let contentType = '';
-            if (file.type.includes('mp3')) {
-                contentType = 'audio/mpeg';
-            } else if (file.type.includes('wav')) {
+            if (file.name.endsWith('.wav')) {
                 contentType = 'audio/wav';
+            } else if (file.name.endsWith('.mp3')) {
+                contentType = 'audio/mpeg';
             } else {
-                // Handle unsupported audio formats
                 throw new Error('Unsupported audio format');
             }
     
-            // Send transcription request
-            const response = await fetch(endpoint, {
-                method: 'POST',
+            // Read the file as binary data (not base64)
+            const binaryData = await RNFS.readFile(filePath, 'base64'); // You can try reading this as 'utf8' as well
+            const byteArray = new Uint8Array(Buffer.from(binaryData, 'base64')); // This is where the Buffer polyfill is used
+    
+            const response = await axios.post(endpoint, byteArray, {
                 headers: {
                     'Ocp-Apim-Subscription-Key': apiKey,
-                    'Content-Type': 'application/octet-stream', // Use this for raw binary data
-                    'Content-Length': binaryData.length.toString(),
+                    'Content-Type': contentType,
+                    'Content-Length': byteArray.length,
                 },
-                body: binaryData,
+                timeout: 30000, // Increased timeout
+                responseType: 'json',
             });
-            
     
-            // Log response status and text
-            console.log('Response Status:', response.status);
-            const responseText = await response.text();
-            console.log('Response Text:', responseText);
+            console.log('Full Azure Response:', response.data);
     
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            const responseData = response.data;
+            if (responseData.RecognitionStatus === 'Success') {
+                const transcription = responseData.DisplayText || 'No transcription available.';
+                console.log('Transcription:', transcription); // Check the value here
+                navigation.navigate('TranslateScreen2', { transcription });
+            } else {
+                const reason = responseData.Reason || 'No reason provided';
+                console.error('Transcription failed:', reason);
+                alert(`Transcription failed: ${reason}`);
             }
-    
-            const data = await response.json();
-            const transcription = data.DisplayText || 'No transcription found.';
-            navigation.navigate('TranslateScreen2', { transcription });
         } catch (error) {
             console.error('Error transcribing audio:', error);
             alert(`Failed to transcribe the audio: ${error.message}`);
@@ -170,7 +156,6 @@ const AudioVideoUploadScreen = () => {
             setLoading(false);
         }
     };
-    
     
     
 
@@ -226,10 +211,10 @@ const AudioVideoUploadScreen = () => {
                 </TouchableOpacity>
             </View>
             <View style={styles.topButtonsContainer}>
-                <TouchableOpacity style={styles.topButton}>
+                <TouchableOpacity style={styles.topButton} onPress={handleAddFile}>
                     <Image source={uploadIcon} style={styles.topIcon} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.topButton}>
+                <TouchableOpacity style={styles.topButton2}>
                     <Image source={resizeIcon} style={styles.topIcon} />
                 </TouchableOpacity>
                 <View style={styles.topHelp}>
@@ -294,14 +279,20 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     topButton: {
-        backgroundColor: '#ffa500',
+        backgroundColor: '#FF6600',
+        padding: 12,
+        borderRadius: 10,
+        marginRight: 10,
+    },
+    topButton2: {
+        backgroundColor: '#FAA300',
         padding: 12,
         borderRadius: 10,
         marginRight: 10,
     },
     topIcon: {
-        width: 24,
-        height: 24,
+        width: 34,
+        height: 34,
         resizeMode: 'contain',
     },
     topHelp: {
@@ -310,11 +301,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#007bff',
         borderRadius: 10,
-        padding: 10,
+        padding: 12,
     },
     topHelpIcon: {
-        width: 20,
-        height: 20,
+        width: 34,
+        height: 34,
         resizeMode: 'contain',
         marginRight: 8,
     },

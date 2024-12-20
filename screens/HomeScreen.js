@@ -129,6 +129,7 @@ const HomeScreen = ({ navigation }) => {
             targetScreen="ScreenD"
           />
         </View>
+        <FeatureCardWithDetails/>
       </ScrollView>
       <FloatingButton />
     </View>
