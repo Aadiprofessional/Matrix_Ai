@@ -13,7 +13,7 @@ import DocumentPicker from 'react-native-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import RNFS from 'react-native-fs';  // Import react-native-fs to read files
-
+import RNFetchBlob from 'react-native-blob-util';
 const audioIcon = require('../assets/mic3.png');
 const videoIcon = require('../assets/cliper.png');
 const backIcon = require('../assets/back.png');
@@ -58,19 +58,32 @@ const AudioVideoUploadScreen = () => {
             const res = await DocumentPicker.pick({
                 type: [DocumentPicker.types.audio, DocumentPicker.types.video],
             });
-
-            if (!res[0].type.includes('audio') && !res[0].type.includes('video')) {
+    
+            if (!res || !res[0]) {
+                alert('No file selected or unsupported file type.');
+                return;
+            }
+    
+            const fileType = res[0].type || '';
+            const fileName = res[0].name || 'Unnamed File';
+            const fileUri = res[0].uri;
+    
+            if (!fileType.includes('audio') && !fileType.includes('video')) {
                 alert('Unsupported file type. Please select an audio or video file.');
                 return;
             }
-
+    
+            // Save the file locally in app's directory
+            const localFilePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+            await RNFS.copyFile(fileUri, localFilePath);
+    
             const newFile = {
                 id: Date.now(),
-                name: res[0].name,
-                uri: res[0].uri,
-                type: res[0].type,
+                name: fileName,
+                uri: localFilePath, // Use the local file path
+                type: fileType,
             };
-
+    
             const updatedFiles = [...files, newFile];
             setFiles(updatedFiles);
             saveFiles(updatedFiles);
@@ -79,42 +92,77 @@ const AudioVideoUploadScreen = () => {
                 console.log('User cancelled file picker.');
             } else {
                 console.error('Unknown error:', err);
+                alert('An error occurred while picking the file. Please try again.');
             }
         }
     };
+    
+    
 
     const handleTranscription = async (file) => {
         setLoading(true);
         const apiKey = 'CNrbioktfZ9k9r2iTUlLVrvbLg0Mqosr5gMT1PqNGisPhAskBsUIJQQJ99ALACfhMk5XJ3w3AAAAACOGITSp';
         const endpoint = 'https://swedencentral.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US';
-
+    
         try {
-            // Read the audio file as binary data
-            const filePath = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
-            const fileData = await RNFS.readFile(filePath, 'base64'); // Read file as base64
-
+            let filePath = file.uri;
+    
+            // Log file details for debugging
+            console.log('Selected file details:', {
+                name: file.name,
+                type: file.type,
+                uri: file.uri,
+            });
+    
+            // Validate file path
+            const exists = await RNFetchBlob.fs.exists(filePath);
+            if (!exists) {
+                throw new Error('File not found or invalid path.');
+            }
+    
+            // Read file as binary
+            const fileData = await RNFetchBlob.fs.readFile(filePath, 'base64');
+            const binaryData = RNFetchBlob.base64.decode(fileData);
+    
+            // Log the file content type and binary data length for debugging
+            console.log('Sending request with content type:', file.type);
+            console.log('Binary data length:', binaryData.length);
+    
+            // Set content type based on file type
+            let contentType = '';
+            if (file.type.includes('mp3')) {
+                contentType = 'audio/mpeg';
+            } else if (file.type.includes('wav')) {
+                contentType = 'audio/wav';
+            } else {
+                // Handle unsupported audio formats
+                throw new Error('Unsupported audio format');
+            }
+    
+            // Send transcription request
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Ocp-Apim-Subscription-Key': apiKey,
-                    'Content-Type': 'audio/wav',  // Set the correct content type for audio
-                    'Content-Length': fileData.length,
+                    'Content-Type': 'application/octet-stream', // Use this for raw binary data
+                    'Content-Length': binaryData.length.toString(),
                 },
-                body: fileData, // Send the binary data
+                body: binaryData,
             });
-
+            
+    
+            // Log response status and text
+            console.log('Response Status:', response.status);
+            const responseText = await response.text();
+            console.log('Response Text:', responseText);
+    
             if (!response.ok) {
                 throw new Error(`API Error: ${response.status} - ${response.statusText}`);
             }
-
+    
             const data = await response.json();
-            console.log('Transcription Response:', data);
             const transcription = data.DisplayText || 'No transcription found.';
-            if (transcription) {
-                navigation.navigate('TranslateScreen2', { transcription });
-            } else {
-                throw new Error('No transcription available');
-            }
+            navigation.navigate('TranslateScreen2', { transcription });
         } catch (error) {
             console.error('Error transcribing audio:', error);
             alert(`Failed to transcribe the audio: ${error.message}`);
@@ -122,6 +170,9 @@ const AudioVideoUploadScreen = () => {
             setLoading(false);
         }
     };
+    
+    
+    
 
     const filteredFiles = files.filter((file) =>
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -133,29 +184,34 @@ const AudioVideoUploadScreen = () => {
         saveFiles(updatedFiles);
     };
 
-    const renderFileItem = ({ item }) => (
-        <View style={styles.fileItem}>
-            <Image
-                source={item.type.includes('audio') ? audioIcon : videoIcon}
-                style={styles.fileIcon}
-            />
-            <Text style={styles.fileName} numberOfLines={1}>
-                {item.name}
-            </Text>
-            <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleTranscription(item)}
-            >
-                <Image source={Translate} style={styles.topHelpIcon2} />
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => handleRemoveFile(item.id)}
-            >
-                <Text style={styles.removeButtonText}>Remove</Text>
-            </TouchableOpacity>
-        </View>
-    );
+    const renderFileItem = ({ item }) => {
+        if (!item) return null; // Guard clause
+    
+        return (
+            <View style={styles.fileItem}>
+                <Image
+                    source={item.type && item.type.includes('audio') ? audioIcon : videoIcon}
+                    style={styles.fileIcon}
+                />
+                <Text style={styles.fileName} numberOfLines={1}>
+                    {item.name || 'Unknown File'}
+                </Text>
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleTranscription(item)}
+                >
+                    <Image source={Translate} style={styles.topHelpIcon2} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveFile(item.id)}
+                >
+                    <Text style={styles.removeButtonText}>Remove</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+    
 
     return (
         <View style={styles.container}>
@@ -169,7 +225,18 @@ const AudioVideoUploadScreen = () => {
                     <Image source={helpIcon} style={styles.headerIcon} />
                 </TouchableOpacity>
             </View>
-
+            <View style={styles.topButtonsContainer}>
+                <TouchableOpacity style={styles.topButton}>
+                    <Image source={uploadIcon} style={styles.topIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.topButton}>
+                    <Image source={resizeIcon} style={styles.topIcon} />
+                </TouchableOpacity>
+                <View style={styles.topHelp}>
+                    <Image source={helpIcon2} style={styles.topHelpIcon} />
+                    <Text style={styles.helpText}>How to add voice memos to Transcribe</Text>
+                </View>
+            </View>
             {/* Loading Indicator */}
             {loading && (
                 <View style={styles.loadingContainer}>
@@ -219,6 +286,47 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         zIndex: 10,
+    },
+    topButtonsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 16,
+        marginBottom: 12,
+    },
+    topButton: {
+        backgroundColor: '#ffa500',
+        padding: 12,
+        borderRadius: 10,
+        marginRight: 10,
+    },
+    topIcon: {
+        width: 24,
+        height: 24,
+        resizeMode: 'contain',
+    },
+    topHelp: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#007bff',
+        borderRadius: 10,
+        padding: 10,
+    },
+    topHelpIcon: {
+        width: 20,
+        height: 20,
+        resizeMode: 'contain',
+        marginRight: 8,
+    },
+    topHelpIcon2: {
+        width: 20,
+        height: 20,
+        resizeMode: 'contain',
+    },
+    helpText: {
+        color: '#ffffff',
+        fontSize: 12,
+        flexShrink: 1,
     },
     loadingText: {
         marginTop: 10,

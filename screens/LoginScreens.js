@@ -1,7 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { supabase } from '../supabaseClient';
 
 const LoginScreen = ({ navigation }) => {
+  // Social Login
+  const handleSocialLogin = async (provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+    });
+    if (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  // Phone OTP Login
+  const handlePhoneLogin = () => {
+    navigation.navigate('OTPScreen');
+  };
+
   return (
     <View style={styles.container}>
       {/* Logo Image */}
@@ -14,17 +30,26 @@ const LoginScreen = ({ navigation }) => {
       <Text style={styles.title}>Let's Get Started!</Text>
 
       {/* Social Login Buttons */}
-      <TouchableOpacity style={styles.socialButton}>
+      <TouchableOpacity
+        style={styles.socialButton}
+        onPress={() => handleSocialLogin('facebook')}
+      >
         <Image source={require('../assets/facebook.png')} style={styles.icon} />
         <Text style={styles.buttonText}>Continue with Facebook</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.socialButton}>
+      <TouchableOpacity
+        style={styles.socialButton}
+        onPress={() => handleSocialLogin('google')}
+      >
         <Image source={require('../assets/google.png')} style={styles.icon} />
         <Text style={styles.buttonText}>Continue with Google</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.socialButton}>
+      <TouchableOpacity
+        style={styles.socialButton}
+        onPress={() => handleSocialLogin('apple')}
+      >
         <Image source={require('../assets/apple.png')} style={styles.icon} />
         <Text style={styles.buttonText}>Continue with Apple</Text>
       </TouchableOpacity>
@@ -33,7 +58,7 @@ const LoginScreen = ({ navigation }) => {
       <Text style={styles.orText}>or</Text>
 
       {/* Phone Login Button */}
-      <TouchableOpacity style={styles.phoneButton} onPress={() => navigation.navigate('OTPScreen')}>
+      <TouchableOpacity style={styles.phoneButton} onPress={handlePhoneLogin}>
         <Text style={styles.phoneButtonText}>Sign in with Phone</Text>
       </TouchableOpacity>
 
@@ -46,8 +71,8 @@ const LoginScreen = ({ navigation }) => {
       </Text>
 
       <View style={styles.footerLinks}>
-        <Text style={styles.footerLink}>Privacy Policy  </Text>
-        <Text style={styles.footerLink}>  Term of Service</Text>
+        <Text style={styles.footerLink}>Privacy Policy </Text>
+        <Text style={styles.footerLink}> Term of Service</Text>
       </View>
     </View>
   );
@@ -80,12 +105,10 @@ const styles = StyleSheet.create({
     padding: 10,
     width: '90%',
     marginVertical: 5,
-    borderRadius: 10, // Ensures rounded corners
-    
-    borderWidth: 1, // Adds a visible border
-    borderColor: '#CCCCCCE8', // Sets the border color to a light gray
-},
-
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CCCCCCE8',
+  },
   icon: {
     width: 24,
     height: 24,

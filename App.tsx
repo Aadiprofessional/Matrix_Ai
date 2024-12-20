@@ -11,6 +11,8 @@ import SignUpDetailsScreen from './screens/SignUpDetailsScreen';
 import OTPCodeScreen from './screens/OTPCodeScreen';
 import AudioVideoUploadScreen from './screens/AudioVideoUploadScreen';
 import TranslateScreen from './screens/TranslateScreen';
+import 'react-native-url-polyfill/auto';
+
 const Stack = createStackNavigator();
 
 const App = () => {
