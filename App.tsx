@@ -13,6 +13,8 @@ import BotScreen from './screens/BotScreen';
 import SignUpDetailsScreen from './screens/SignUpDetailsScreen';
 import AudioVideoUploadScreen from './screens/AudioVideoUploadScreen';
 import TranslateScreen from './screens/TranslateScreen';
+import BotScreen2 from './screens/BotScreen copy';
+import TranslatorScreen from './screens/Translator';
 
 const Stack = createStackNavigator();
 
@@ -76,9 +78,11 @@ const App = () => {
         {/* Main App Screens */}
         <Stack.Screen name="Main" component={AppNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="BotScreen" component={BotScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="BotScreen2" component={BotScreen2} options={{ headerShown: false }} />
         <Stack.Screen name="SignUpDetails" component={SignUpDetailsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="TranslateScreen" component={AudioVideoUploadScreen} options={{ headerShown: false }} />
         <Stack.Screen name="TranslateScreen2" component={TranslateScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="TranslateScreen3" component={TranslatorScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
 </NavigationContainer>
 

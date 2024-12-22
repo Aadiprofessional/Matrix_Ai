@@ -20,7 +20,7 @@ const HomeScreen = ({ navigation }) => {
     Animated.loop(
       Animated.timing(rotateValue, {
         toValue: 1,
-        duration: isRotatingFast ? 1000 : 3000,  // Change speed based on button click
+        duration: isRotatingFast ? 1000 : 8000,  // Change speed based on button click
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -43,7 +43,7 @@ const HomeScreen = ({ navigation }) => {
       setIsRotatingFast(false);
       // Navigate to TranslateScreen after 3 seconds
       navigation.navigate('TranslateScreen');
-    }, 3000);
+    }, 1000);
   };
 
   return (
@@ -141,6 +141,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFFFF',
     padding: 10,
+    marginTop:50,
   },
   header: {
     flexDirection: 'row',

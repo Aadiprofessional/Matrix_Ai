@@ -171,6 +171,7 @@ const AudioVideoUploadScreen = () => {
             <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveFile(item.id)}>
                 <Text style={styles.removeButtonText}>X</Text>
             </TouchableOpacity>
+            
         );
     
         return (
@@ -287,6 +288,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 1,
+        marginRight:10,
+        marginTop:15,
     },
     removeButtonText: {
         color: '#fff',

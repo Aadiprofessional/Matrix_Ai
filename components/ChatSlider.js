@@ -90,7 +90,15 @@ const ChatSlider = ({ isVisible, toggleModal }) => {
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             style={styles.chatItem}
-                            onPress={() => navigation.navigate('BotScreen', { chatName: item.name })}
+                            onPress={() => {
+                                toggleModal(); // Close the modal
+                                navigation.navigate('BotScreen', { 
+                                    chatName: item.name,
+                                    chatDescription: item.description,
+                                    chatImage: item.image 
+                                });
+                            }}
+                            
                         >
                             <Image source={item.image} style={styles.chatImage} />
                             <View style={styles.chatTextContainer}>

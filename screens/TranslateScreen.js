@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import FloatingButton from '../components/FloatingButton'; // Replace with the correct file path
 import { useNavigation } from '@react-navigation/native';
+import FloatingButton2 from '../components/FloatingButton copy';
 
 const TranslateScreen = ({ route }) => {
     const { transcription: initialTranscription, fileName } = route.params || {};
@@ -32,8 +33,15 @@ const TranslateScreen = ({ route }) => {
 
     const handleFloatingButtonPress = () => {
         console.log('Floating Button Pressed:', transcription);
-        // Add logic to navigate or perform actions with `transcription`
+        // Navigate to BotScreen2 and pass the transcription as a parameter
+        navigation.navigate('BotScreen2', { transcription });
     };
+    const handleFloatingButton2Press = () => {
+        console.log('Floating Button 2 Pressed:', transcription);
+        // Navigate to TranslateScreen3 and pass the transcription as a parameter
+        navigation.navigate('TranslateScreen3', { transcription });
+    };
+
 
     return (
         <View style={styles.container}>
@@ -79,16 +87,18 @@ const TranslateScreen = ({ route }) => {
             </ScrollView>
 
             {/* Floating Buttons */}
-            <View style={styles.floatingButtonContainer}>
-                <FloatingButton
-                    onPress={handleFloatingButtonPress}
-                   
+            <TouchableOpacity onPress={handleFloatingButtonPress} style={styles.floatingButton}>
+                   <Image
+                     source={require('../assets/robot.png')} // Replace with your image path
+                     style={styles.buttonImage}
+                   />
+                 </TouchableOpacity>
+                 <TouchableOpacity onPress={handleFloatingButton2Press} style={styles.floatingButton2}>
+                <Image
+                    source={require('../assets/Translate.png')} // Replace with your translate icon
+                    style={styles.buttonImage2}
                 />
-                <FloatingButton
-                    onPress={handleFloatingButtonPress}
-                   
-                />
-            </View>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -141,6 +151,87 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#007bff',
     },
+    floatingButton: {
+        position: 'absolute',
+        bottom: 90,
+        right: 90,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#007BFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 100,
+        shadowColor: '#007BFF',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+    floatingButton2: {
+        position: 'absolute',
+        bottom: 90,
+        right: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#FF6600',  // Orange color for the second button
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 101,
+        shadowColor: 'orange',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+    buttonImage: {
+        width: 60,
+        height: 60,
+        resizeMode: 'contain',
+    },
+    buttonImage2: {
+        width: 40,
+        height: 40,
+        resizeMode: 'contain',
+    },
+      popup: {
+        position: 'absolute',
+        bottom: 160, // Position above the floating button
+        right: 20,
+        zIndex: 999,
+      },
+      speechBubble: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 15,
+        padding: 10,
+        maxWidth: 200,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        shadowOffset: { width: 0, height: 2 },
+        borderColor: '#ccc',
+        borderWidth: 1,
+      },
+      triangle: {
+        position: 'absolute',
+        bottom: -10,
+        right: 20,
+        width: 0,
+        height: 0,
+        borderLeftWidth: 10,
+        borderRightWidth: 10,
+        borderTopWidth: 10,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: '#85858549',
+      },
+      typingText: {
+        fontSize: 14,
+        color: '#333',
+        fontWeight: 'bold',
+      },
+    
     pencilIconContainer: {
         marginLeft: 8,
     },

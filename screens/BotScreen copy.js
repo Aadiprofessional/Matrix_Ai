@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,8 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 
 
-const BotScreen = ({ navigation ,route}) => {
-  const { chatName, chatDescription, chatImage } = route.params;
+const BotScreen2 = ({ navigation ,route}) => {
+  const { transcription } = route.params || {};
   const [messages, setMessages] = useState([
     {
       id: '1',
@@ -29,6 +29,18 @@ const BotScreen = ({ navigation ,route}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);  // Track if user is typing
 
+  useEffect(() => {
+    if (transcription) {
+      const newMessage = {
+        id: Date.now().toString(),
+        text: `Please help me summarise this text: ${transcription}`,  // Add the prompt before the transcription
+        sender: 'user',
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      fetchGeminiResponse(`Please help me summarise this text: ${transcription}`);  // Send the prompt with transcription to the API
+    }
+  }, [transcription]);
+  
   // Function to get response from Hugging Face (using GPT-2 as an example)
   // Replace this with your Gemini API key
   const GEMINI_API_KEY = 'AIzaSyCLVsdkzk1Dk7Tka-Be6EbA0Q60Bdhcd44';
@@ -90,7 +102,6 @@ const BotScreen = ({ navigation ,route}) => {
       setIsTyping(false); // Hide Send button and show Mic button again
     }
   };
-console.log(chatImage);
 
   const handleAddImage =()=>{};
 
@@ -135,8 +146,8 @@ console.log(chatImage);
         </TouchableOpacity>
         <Image source={require('../assets/Avatar/Cat.png')} style={styles.botIcon} />
         <View style={styles.headerTextContainer}>
-          <Text style={styles.botName}>{chatName}</Text>
-          <Text style={styles.botDescription}>{chatDescription}</Text>
+          <Text style={styles.botName}>MatrixAI Bot</Text>
+          <Text style={styles.botDescription}>Your virtual assistant</Text>
         </View>
         <TouchableOpacity>
           <Image source={require('../assets/threeDot.png')} style={styles.headerIcon2} />
@@ -309,4 +320,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BotScreen;
+export default BotScreen2;
