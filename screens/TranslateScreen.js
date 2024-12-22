@@ -1,43 +1,93 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Share,
+    ScrollView,
+    Image,
+    TextInput,
+} from 'react-native';
+import FloatingButton from '../components/FloatingButton'; // Replace with the correct file path
+import { useNavigation } from '@react-navigation/native';
 
 const TranslateScreen = ({ route }) => {
-    const { transcription } = route.params || {};
+    const { transcription: initialTranscription, fileName } = route.params || {};
+    const [isEditing, setIsEditing] = useState(false);
+    const [transcription, setTranscription] = useState(initialTranscription);
+    const navigation = useNavigation(); 
+    // Function to handle the share action
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: transcription || 'No transcription available.',
+            });
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    };
+
+    const toggleEdit = () => setIsEditing(!isEditing);
+
+    const handleFloatingButtonPress = () => {
+        console.log('Floating Button Pressed:', transcription);
+        // Add logic to navigate or perform actions with `transcription`
+    };
 
     return (
         <View style={styles.container}>
             {/* Header Section */}
             <View style={styles.headerContainer}>
-                <Text style={styles.header}>Audio 10:00:10 2024-01-30</Text>
-                <TouchableOpacity style={styles.shareButton}>
-                    <Text style={styles.shareText}>Share</Text>
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}> {/* Add navigation */}
+                    <Image
+                        source={require('../assets/back.png')} // Replace with your actual back icon PNG
+                        style={styles.icon}
+                    />
+                </TouchableOpacity>
+                <Text style={styles.header}>{fileName}</Text>
+                <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
+                    <Image
+                        source={require('../assets/share.png')} // Replace with your actual share icon PNG
+                        style={styles.icon}
+                    />
                 </TouchableOpacity>
             </View>
 
-            {/* Transcription Section */}
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {transcription && transcription.length > 0 ? (
-                    transcription.map((entry, index) => (
-                        <View key={index} style={styles.transcriptionEntry}>
-                            <Text style={styles.speaker}>
-                                {entry.speaker} <Text style={styles.timestamp}>{entry.time}</Text>
-                            </Text>
-                            <Text style={styles.transcriptionText}>{entry.text}</Text>
-                        </View>
-                    ))
-                ) : (
-                    <Text style={styles.noTranscription}>No transcription available.</Text>
-                )}
+            {/* Transcription Content */}
+            <ScrollView style={styles.contentContainer}>
+                <View style={styles.transcriptionRow}>
+                    {isEditing ? (
+                        <TextInput
+                            style={styles.textInput}
+                            value={transcription}
+                            onChangeText={setTranscription}
+                            multiline
+                        />
+                    ) : (
+                        <Text style={styles.content}>
+                            {transcription || 'No transcription available.'}
+                        </Text>
+                    )}
+                    <TouchableOpacity onPress={toggleEdit} style={styles.pencilIconContainer}>
+                        <Image
+                            source={require('../assets/pencil.png')} // Replace with your actual pencil icon PNG
+                            style={styles.pencilIcon}
+                        />
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
 
-            {/* Bottom Section with Buttons */}
-            <View style={styles.bottomContainer}>
-                <TouchableOpacity style={styles.translateButton} onPress={() => console.log('Translate pressed')}>
-                    <Text style={styles.buttonText}>Translate</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.botButton} onPress={() => console.log('Bot pressed')}>
-                    <Text style={styles.buttonText}>Bot</Text>
-                </TouchableOpacity>
+            {/* Floating Buttons */}
+            <View style={styles.floatingButtonContainer}>
+                <FloatingButton
+                    onPress={handleFloatingButtonPress}
+                   
+                />
+                <FloatingButton
+                    onPress={handleFloatingButtonPress}
+                   
+                />
             </View>
         </View>
     );
@@ -47,84 +97,64 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 16,
+        marginTop: 50,
     },
     headerContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        justifyContent: 'space-between',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
     },
     header: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
+        fontSize: 13,
+        fontWeight: '600',
     },
-    shareButton: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        backgroundColor: '#f5f5f5',
-        borderRadius: 8,
+    iconButton: {
+        padding: 8,
     },
-    shareText: {
-        fontSize: 14,
-        color: '#007AFF',
+    icon: {
+        width: 24,
+        height: 24,
+        resizeMode: 'contain',
     },
-    scrollContainer: {
-        paddingBottom: 16,
+    contentContainer: {
+        flex: 1,
+        padding: 16,
     },
-    transcriptionEntry: {
-        marginBottom: 16,
-    },
-    speaker: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        color: '#333',
-    },
-    timestamp: {
-        fontWeight: 'normal',
-        fontSize: 14,
-        color: '#666',
-    },
-    transcriptionText: {
-        fontSize: 14,
-        color: '#333',
-        marginTop: 4,
-    },
-    noTranscription: {
-        textAlign: 'center',
-        fontSize: 16,
-        color: '#999',
-    },
-    bottomContainer: {
+    transcriptionRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#ddd',
-        paddingTop: 16,
-    },
-    translateButton: {
-        flex: 1,
-        paddingVertical: 12,
-        backgroundColor: '#007AFF',
-        borderRadius: 8,
-        marginRight: 8,
         alignItems: 'center',
     },
-    botButton: {
-        flex: 1,
-        paddingVertical: 12,
-        backgroundColor: '#4CAF50',
-        borderRadius: 8,
-        marginLeft: 8,
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: '#fff',
+    content: {
         fontSize: 16,
-        fontWeight: 'bold',
+        lineHeight: 24,
+        color: '#333',
+        flex: 1,
+    },
+    textInput: {
+        fontSize: 16,
+        lineHeight: 24,
+        color: '#333',
+        flex: 1,
+        borderBottomWidth: 1,
+        borderBottomColor: '#007bff',
+    },
+    pencilIconContainer: {
+        marginLeft: 8,
+    },
+    pencilIcon: {
+        width: 20,
+        height: 20,
+        resizeMode: 'contain',
+    },
+    floatingButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-evenly',
+        paddingVertical: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#ccc',
     },
 });
 

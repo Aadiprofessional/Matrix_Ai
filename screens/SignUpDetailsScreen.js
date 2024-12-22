@@ -4,26 +4,48 @@ import { useRoute } from '@react-navigation/native';
 
 const SignUpDetailsScreen = ({ navigation }) => {
     const route = useRoute();
-    const { phoneNumber = '', disablePhoneInput = false } = route.params || {};
+    const { email = '', disableEmailInput = false } = route.params || {};
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
     const [gender, setGender] = useState('Male');
     const [alternateNumber, setAlternateNumber] = useState('');
-    const [inputPhoneNumber, setInputPhoneNumber] = useState(phoneNumber);
+    const [inputEmail, setInputEmail] = useState(email);
+    const [password, setPassword] = useState('');
 
-    const handleLogin = () => {
-        if (inputPhoneNumber.trim().length === 10) {
+    const handleLogin = async () => {
+        if (inputEmail.trim().length > 0 && inputEmail.includes('@')) {
             setLoading(true);
-            setTimeout(() => {
-                setLoading(false);
-                navigation.navigate('OTPCode', {
-                    phoneNumber: inputPhoneNumber,
-                    disablePhoneInput: true,
+            try {
+                const response = await fetch('https://matrix-server.vercel.app/sendOtpForSave', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: inputEmail }),
                 });
-            }, 2000); // Simulated delay
+
+                const result = await response.json();
+                setLoading(false);
+
+                if (response.ok) {
+                    navigation.navigate('OTPCode', {
+                        email: inputEmail,
+                        disableEmailInput: true,
+                        name,
+                        age,
+                        gender,
+                        password
+                    });
+                } else {
+                    alert(result.message || 'Failed to send OTP. Please try again.');
+                }
+            } catch (error) {
+                setLoading(false);
+                alert('An error occurred. Please try again.');
+            }
         } else {
-            alert('Please enter a valid 10-digit phone number!');
+            alert('Please enter a valid email address!');
         }
     };
 
@@ -37,7 +59,7 @@ const SignUpDetailsScreen = ({ navigation }) => {
             </TouchableOpacity>
 
             {/* Header */}
-            <Text style={styles.headerText}>Phone number not registered.{'\n'}Please provide details.</Text>
+            <Text style={styles.headerText}>Email not registered.{"\n"}Please provide details.</Text>
 
             {/* Input Fields */}
             <TextInput
@@ -74,18 +96,18 @@ const SignUpDetailsScreen = ({ navigation }) => {
                 ))}
             </View>
 
-            {/* Phone Number Input */}
+            {/* Email Input */}
             <TextInput
                 style={[
                     styles.input,
-                    disablePhoneInput && styles.disabledInput,
+                    disableEmailInput && styles.disabledInput,
                 ]}
-                placeholder="Phone Number"
+                placeholder="Email Address"
                 placeholderTextColor="#aaa"
-                keyboardType="phone-pad"
-                value={inputPhoneNumber}
-                onChangeText={setInputPhoneNumber}
-                editable={!disablePhoneInput}
+                keyboardType="email-address"
+                value={inputEmail}
+                onChangeText={setInputEmail}
+                editable={!disableEmailInput}
             />
 
             <TextInput
@@ -97,13 +119,22 @@ const SignUpDetailsScreen = ({ navigation }) => {
                 onChangeText={setAlternateNumber}
             />
 
+            <TextInput
+                style={styles.input}
+                placeholder="Enter Password"
+                placeholderTextColor="#aaa"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+            />
+
             {/* Centered Submit Button */}
             <View style={styles.centeredButtonContainer}>
                 <TouchableOpacity style={styles.otpButton} onPress={handleLogin}>
                     {loading ? (
                         <ActivityIndicator size="small" color="#fff" />
                     ) : (
-                        <Text style={styles.otpButtonText}>Get OTP!</Text>
+                        <Text style={styles.otpButtonText}>Get OTP</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -183,14 +214,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#2274F0',
     },
     centeredButtonContainer: {
-        alignItems: 'center', // Centers the button horizontally
+        alignItems: 'center',
         marginTop: 10,
     },
     otpButton: {
         backgroundColor: '#2274F0',
         paddingVertical: 12,
         borderRadius: 30,
-        width: '90%', // Make the button narrower and centered
+        width: '90%',
         alignItems: 'center',
     },
     otpButtonText: {

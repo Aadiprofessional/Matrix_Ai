@@ -20,7 +20,7 @@ const HomeScreen = ({ navigation }) => {
     Animated.loop(
       Animated.timing(rotateValue, {
         toValue: 1,
-        duration: isRotatingFast ? 1000 : 8000,  // Change speed based on button click
+        duration: isRotatingFast ? 1000 : 3000,  // Change speed based on button click
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -122,7 +122,7 @@ const HomeScreen = ({ navigation }) => {
             targetScreen="ScreenC"
           />
           <FeatureCard
-            title="Speech to Ppt"
+            title="Speech to Presentation"
             description="Convert your Speech into stunning Text."
             iconSource={require('../assets/card/ppt.png')}
             navigation={navigation}

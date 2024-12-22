@@ -5,25 +5,60 @@ import {
 
 const { width } = Dimensions.get('window');
 
-const PhoneLoginScreen = ({ navigation }) => {
-    const [phoneNumber, setPhoneNumber] = useState('');
+const EmailLoginScreen = ({ navigation }) => {
+    const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false); // State to manage loading
 
-    const handleLogin = () => {
-        if (phoneNumber.trim().length === 10) {
-            navigation.navigate('SignUpDetails', {
-                phoneNumber: phoneNumber,
-                disablePhoneInput: true, // Disable input for the phone field
+    const handleLogin = async () => {
+        if (email.trim() === '') {
+            alert('Please enter a valid email!');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // API call to send OTP to the email
+            const response = await fetch('https://matrix-server.vercel.app/sendEmailOtp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
             });
-        } else {
-            alert('Please enter a valid phone number!');
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Check if the response indicates success
+              if (data.error === 'User not registered') {
+                    // If the user is not registered, navigate to the SignUpDetails screen
+                    navigation.navigate('SignUpDetails', {
+                        email: email, // Pass email to SignUpDetails screen
+                        disableEmailInput: true, // Disable email input on SignUpDetails screen
+                    });
+                } else {
+                    
+                        // If OTP is successfully sent, navigate to the OTPCode screen
+                        navigation.navigate('OTPCode2', { email: email });
+                    
+                }
+            } else {
+                // Handle any non-200 responses
+                alert(`Error: ${data.message || 'Something went wrong'}`);
+            }
+        } catch (error) {
+            console.log('Error sending OTP:', error);
+            alert('Error sending OTP. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleSignUp = () => {
         navigation.navigate('SignUpDetails', {
-            phoneNumber: '', // No predefined phone number
-            disablePhoneInput: false, // Allow editing the phone field
+            email: '', // No predefined email address
+            disableEmailInput: false, // Allow email input on SignUpDetails screen
         });
     };
 
@@ -39,16 +74,15 @@ const PhoneLoginScreen = ({ navigation }) => {
             {/* Heading */}
             <Text style={styles.heading}>Log in and unlock{'\n'}the digital universe</Text>
 
-            {/* Phone Number Input */}
+            {/* Email Input */}
             <View style={styles.inputContainer}>
-                <Text style={styles.phoneIcon}>📞</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Enter Phone number"
+                    placeholder="Enter Email"
                     placeholderTextColor="#aaa"
-                    keyboardType="phone-pad"
-                    value={phoneNumber}
-                    onChangeText={setPhoneNumber}
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
                 />
             </View>
 
@@ -57,7 +91,7 @@ const PhoneLoginScreen = ({ navigation }) => {
                 {loading ? (
                     <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                    <Text style={styles.otpButtonText}>Get OTP!</Text>
+                    <Text style={styles.otpButtonText}>Get OTP</Text>
                 )}
             </TouchableOpacity>
 
@@ -218,4 +252,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default PhoneLoginScreen;
+export default EmailLoginScreen;

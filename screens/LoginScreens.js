@@ -59,7 +59,7 @@ const LoginScreen = ({ navigation }) => {
 
       {/* Phone Login Button */}
       <TouchableOpacity style={styles.phoneButton} onPress={handlePhoneLogin}>
-        <Text style={styles.phoneButtonText}>Sign in with Phone</Text>
+        <Text style={styles.phoneButtonText}>Sign in with OTP</Text>
       </TouchableOpacity>
 
       {/* Footer */}

@@ -11,16 +11,19 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import AppNavigator from './AppNavigator';
 
 const { width } = Dimensions.get('window');
 
-const OTPCodeScreen = ({ navigation, route }) => {
-    const { email, name, age, gender, password } = route.params || {};
+const OTPCodeScreen2 = ({ route, navigation }) => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [activeIndex, setActiveIndex] = useState(0);
     const [error, setError] = useState(false);
+    const [loading, setLoading] = useState(false); // Loading state for button
+    const [otpVerified, setOtpVerified] = useState(false); // Track if OTP is successfully verified
 
     const inputRefs = [];
+    const { email } = route.params; // Retrieve email from navigation params
 
     // Auto-focus on first box when screen loads
     useEffect(() => {
@@ -44,40 +47,48 @@ const OTPCodeScreen = ({ navigation, route }) => {
     // Handle Verify OTP Button
     const handleVerify = async () => {
         const enteredOtp = otp.join('');
-        if (enteredOtp.trim().length === 6) {
+        if (enteredOtp.length === 6 && email) {
+            console.log('OTP entered:', enteredOtp); // Log OTP entered
             try {
-                const response = await fetch('https://matrix-server.vercel.app/saveUserData', {
+                setLoading(true);
+                const response = await fetch('https://matrix-server.vercel.app/verifyEmailOtp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        email,
-                        name,
-                        age,
-                        gender,
+                        email: email, // Use the email from params
                         otp: enteredOtp,
-                        password,
                     }),
                 });
-    
-                const result = await response.json();
-    
-                if (response.ok) {
+                const data = await response.json();
+                setLoading(false);
+
+                console.log('API Response:', data); // Log API response
+
+                if (data.message === "OTP verified successfully") {
+                    setOtpVerified(true); // OTP successfully verified
                     setError(false);
-                    // Save login status in AsyncStorage
+                    console.log('OTP Verified Successfully'); // Log success
                     await AsyncStorage.setItem('userLoggedIn', 'true');
-                    navigation.navigate('Main'); // Navigate to Home Screen
+                    navigation.navigate('Main');
+                    
+// Navigate to Home Screen
                 } else {
+                    setOtpVerified(false); // OTP verification failed
                     setError(true);
-                    alert(result.message || 'Verification failed. Please try again.');
+                    console.log('OTP verification failed'); // Log failure
                 }
+                
             } catch (error) {
+                setLoading(false);
                 setError(true);
-                alert('An error occurred. Please try again.');
+                console.error('API Error:', error); // Log error
+                alert('Something went wrong. Please try again.');
             }
         } else {
             setError(true);
+            console.log('Invalid OTP or email missing'); // Log invalid input
         }
     };
 
@@ -88,6 +99,7 @@ const OTPCodeScreen = ({ navigation, route }) => {
         setActiveIndex(0);
         setError(false);
         alert('A new code has been sent!');
+        console.log('Resent OTP'); // Log resend action
     };
 
     return (
@@ -107,9 +119,9 @@ const OTPCodeScreen = ({ navigation, route }) => {
 
             {/* Error or Subtitle */}
             {error ? (
-                <Text style={styles.errorText}>Invalid OTP. Please try again.</Text>
+                <Text style={styles.errorText}>This code is not correct or email is invalid</Text>
             ) : (
-                <Text style={styles.subtitle}>Enter the 6 digits code that you received on your SMS</Text>
+                <Text style={styles.subtitle}>Enter the 6 digits code that you received on your email</Text>
             )}
 
             {/* OTP Inputs */}
@@ -150,7 +162,6 @@ const OTPCodeScreen = ({ navigation, route }) => {
                 ))}
             </View>
 
-
             {/* Resend Code */}
             <TouchableOpacity style={styles.resendContainer} onPress={handleResendCode}>
                 <Image source={require('../assets/resend.png')} style={styles.resendImage} />
@@ -158,8 +169,8 @@ const OTPCodeScreen = ({ navigation, route }) => {
             </TouchableOpacity>
 
             {/* Verify Button */}
-            <TouchableOpacity style={styles.verifyButton} onPress={handleVerify}>
-                <Text style={styles.verifyButtonText}>Verify</Text>
+            <TouchableOpacity style={styles.verifyButton} onPress={handleVerify} disabled={loading}>
+                <Text style={styles.verifyButtonText}>{loading ? 'Verifying...' : 'Verify'}</Text>
             </TouchableOpacity>
         </KeyboardAvoidingView>
     );
@@ -194,7 +205,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginTop: 100,
+        marginTop: 50,
         marginBottom: 10,
         textAlign: 'center',
     },
@@ -262,4 +273,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default OTPCodeScreen;
+export default OTPCodeScreen2;

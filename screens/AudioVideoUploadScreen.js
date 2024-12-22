@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import RNFS from 'react-native-fs';  // Import react-native-fs to read files
 import axios from 'axios';
 import { Buffer } from 'buffer';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler'; 
 
 
 const audioIcon = require('../assets/mic3.png');
@@ -24,9 +25,10 @@ const uploadIcon = require('../assets/Import.png');
 const resizeIcon = require('../assets/cliper.png');
 const helpIcon = require('../assets/threeDot.png');
 const helpIcon2 = require('../assets/mic2.png');
-const Translate = require('../assets/Translate.png');
+const Translate = require('../assets/convert.png');
 const micIcon = require('../assets/mic3.png');
-
+const clockIcon = require('../assets/clock.png');
+const calendarIcon = require('../assets/calender.png');
 const AudioVideoUploadScreen = () => {
     const navigation = useNavigation();
     const [files, setFiles] = useState([]);
@@ -61,14 +63,13 @@ const AudioVideoUploadScreen = () => {
             const res = await DocumentPicker.pick({
                 type: [DocumentPicker.types.audio, DocumentPicker.types.video],
             });
-    
             if (!res || !res[0]) {
                 alert('No file selected or unsupported file type.');
                 return;
             }
     
             const fileType = res[0].type || '';
-            const fileName = res[0].name || 'Unnamed File';
+            const fileName = res[0].name || 'Unnamed_File';
             const fileUri = res[0].uri;
     
             if (!fileType.includes('audio') && !fileType.includes('video')) {
@@ -76,17 +77,20 @@ const AudioVideoUploadScreen = () => {
                 return;
             }
     
-            // Save the file locally in app's directory
-            const localFilePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-            await RNFS.copyFile(fileUri, localFilePath);
+            // Generate a unique file name to avoid overwriting
+            const uniqueFileName = `${Date.now()}_${fileName}`;
+            const localFilePath = `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`;
     
-            console.log('File saved at: ', localFilePath);  // Log the file path
+            // Save the file locally in app's directory
+            await RNFS.copyFile(fileUri, localFilePath);
     
             const newFile = {
                 id: Date.now(),
-                name: fileName,
-                uri: localFilePath,  // Use the local file path
+                name: uniqueFileName,
+                uri: localFilePath,
                 type: fileType,
+                duration: '00:03:45', // Placeholder for duration
+                uploadedAt: new Date().toLocaleString(), // Date and time
             };
     
             const updatedFiles = [...files, newFile];
@@ -95,20 +99,19 @@ const AudioVideoUploadScreen = () => {
         } catch (err) {
             if (DocumentPicker.isCancel(err)) {
                 console.log('User cancelled file picker.');
-            } else if (err instanceof Error) {
+            } else {
                 console.error('Error picking file:', err.message);
                 alert('An error occurred while picking the file. Please try again.');
-            } else {
-                console.error('Unknown error:', err);
             }
         }
     };
+    
 
     const handleTranscription = async (file) => {
         setLoading(true);
         const apiKey = 'CNrbioktfZ9k9r2iTUlLVrvbLg0Mqosr5gMT1PqNGisPhAskBsUIJQQJ99ALACfhMk5XJ3w3AAAAACOGITSp';
         const endpoint = 'https://swedencentral.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US';
-        
+    
         try {
             const filePath = file.uri;
             const exists = await RNFS.exists(filePath);
@@ -123,9 +126,8 @@ const AudioVideoUploadScreen = () => {
                 throw new Error('Unsupported audio format');
             }
     
-            // Read the file as binary data (not base64)
-            const binaryData = await RNFS.readFile(filePath, 'base64'); // You can try reading this as 'utf8' as well
-            const byteArray = new Uint8Array(Buffer.from(binaryData, 'base64')); // This is where the Buffer polyfill is used
+            const binaryData = await RNFS.readFile(filePath, 'base64');
+            const byteArray = new Uint8Array(Buffer.from(binaryData, 'base64'));
     
             const response = await axios.post(endpoint, byteArray, {
                 headers: {
@@ -133,31 +135,26 @@ const AudioVideoUploadScreen = () => {
                     'Content-Type': contentType,
                     'Content-Length': byteArray.length,
                 },
-                timeout: 30000, // Increased timeout
+                timeout: 30000,
                 responseType: 'json',
             });
-    
-            console.log('Full Azure Response:', response.data);
     
             const responseData = response.data;
             if (responseData.RecognitionStatus === 'Success') {
                 const transcription = responseData.DisplayText || 'No transcription available.';
-                console.log('Transcription:', transcription); // Check the value here
-                navigation.navigate('TranslateScreen2', { transcription });
+                navigation.navigate('TranslateScreen2', { transcription, fileName: file.name });
             } else {
                 const reason = responseData.Reason || 'No reason provided';
-                console.error('Transcription failed:', reason);
                 alert(`Transcription failed: ${reason}`);
             }
         } catch (error) {
-            console.error('Error transcribing audio:', error);
             alert(`Failed to transcribe the audio: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
     
-    
+
 
     const filteredFiles = files.filter((file) =>
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -170,41 +167,53 @@ const AudioVideoUploadScreen = () => {
     };
 
     const renderFileItem = ({ item }) => {
-        if (!item) return null; // Guard clause
+        const renderRightActions = () => (
+            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveFile(item.id)}>
+                <Text style={styles.removeButtonText}>X</Text>
+            </TouchableOpacity>
+        );
     
         return (
-            <View style={styles.fileItem}>
-                <Image
-                    source={item.type && item.type.includes('audio') ? audioIcon : videoIcon}
-                    style={styles.fileIcon}
-                />
-                <Text style={styles.fileName} numberOfLines={1}>
-                    {item.name || 'Unknown File'}
-                </Text>
-                <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleTranscription(item)}
-                >
-                    <Image source={Translate} style={styles.topHelpIcon2} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveFile(item.id)}
-                >
-                    <Text style={styles.removeButtonText}>Remove</Text>
-                </TouchableOpacity>
-            </View>
+            <Swipeable renderRightActions={renderRightActions}>
+                <View style={styles.fileItem}>
+                    <Image
+                        source={item.type && item.type.includes('audio') ? audioIcon : videoIcon}
+                        style={styles.fileIcon}
+                    />
+                    <View style={styles.detailsRow}>
+                        <Text style={styles.fileName} numberOfLines={1}>
+                            {item.name || 'Unknown File'}
+                        </Text>
+                        <View style={styles.fileItem2}>
+                            <Image source={clockIcon} style={styles.detailIcon2} />
+                            <Text style={styles.detailText}>{item.duration}</Text>
+                            <Image source={calendarIcon} style={styles.detailIcon2} />
+                            <Text style={styles.detailText}>{item.uploadedAt}</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => handleTranscription(item)}
+                    >
+                        <Image source={Translate} style={styles.detailIcon} />
+                    </TouchableOpacity>
+                </View>
+            </Swipeable>
         );
     };
     
+
 
     return (
         <View style={styles.container}>
             {/* Header Section */}
             <View style={styles.header}>
-                <TouchableOpacity>
-                    <Image source={backIcon} style={styles.headerIcon} />
-                </TouchableOpacity>
+               <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.goBack()}> {/* Add navigation */}
+                                   <Image
+                                       source={require('../assets/back.png')} // Replace with your actual back icon PNG
+                                       style={styles.headerIcon}
+                                   />
+                               </TouchableOpacity>
                 <Text style={styles.headerTitle}>Matrix AI</Text>
                 <TouchableOpacity>
                     <Image source={helpIcon} style={styles.headerIcon} />
@@ -259,8 +268,32 @@ const AudioVideoUploadScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#ffffff',
+   
+        marginTop: 50, // Ensures the container respects the safe area
     },
+    actionButton: {
+        position: 'absolute',
+        right: 10, // Aligns the button to the right edge of the card
+        backgroundColor: '#ffa500',
+        borderRadius: 20, // Makes it rounded
+        padding: 8,
+        elevation: 2,
+    },
+    removeButton: {
+        backgroundColor: '#ff4d4d',
+        width: 40,
+        height: 40,
+        borderRadius: 20, // Circular button
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 1,
+    },
+    removeButtonText: {
+        color: '#fff',
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    
     loadingContainer: {
         position: 'absolute',
         top: 0,
@@ -319,6 +352,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         flexShrink: 1,
     },
+    detailText: {
+        color: '#B7B7B7FF',
+        fontSize: 8,
+        flexShrink: 1,
+        marginRight: 5,
+    },
     loadingText: {
         marginTop: 10,
         fontSize: 16,
@@ -341,6 +380,17 @@ const styles = StyleSheet.create({
         height: 24,
         resizeMode: 'contain',
     },
+    detailIcon2: {
+        width: 14,
+        height: 14,
+        resizeMode: 'contain',
+    },
+    detailIcon: {
+        width: 34,
+        height: 34,
+        padding:5,
+        resizeMode: 'contain',
+    },
     searchBar: {
         backgroundColor: '#f1f3f6',
         borderRadius: 8,
@@ -359,6 +409,15 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         elevation: 2,
     },
+    fileItem2: {
+        flexDirection: 'row',
+        alignItems: 'center',
+
+
+
+
+
+    },
     fileIcon: {
         width: 36,
         height: 36,
@@ -367,24 +426,12 @@ const styles = StyleSheet.create({
     },
     fileName: {
         flex: 1,
-        fontSize: 14,
+        fontSize: 15,
         color: '#333',
+        fontWeight: 'bold',
     },
-    actionButton: {
-        backgroundColor: '#ffa500',
-        borderRadius: 12,
-        padding: 8,
-    },
-    removeButton: {
-        marginLeft: 8,
-        backgroundColor: '#ff4d4d',
-        padding: 6,
-        borderRadius: 8,
-    },
-    removeButtonText: {
-        color: '#fff',
-        fontSize: 12,
-    },
+  
+  
     floatingButton: {
         position: 'absolute',
         bottom: 30,
