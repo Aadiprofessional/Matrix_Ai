@@ -16,7 +16,7 @@ import RNFS from 'react-native-fs';  // Import react-native-fs to read files
 import axios from 'axios';
 import { Buffer } from 'buffer';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler'; 
-
+import Share from 'react-native-share'; // Add for file sharing
 
 const audioIcon = require('../assets/mic3.png');
 const videoIcon = require('../assets/cliper.png');
@@ -165,17 +165,61 @@ const AudioVideoUploadScreen = () => {
         setFiles(updatedFiles);
         saveFiles(updatedFiles);
     };
+   
+    
+    const handleShareFile = async (file) => {
+        try {
+            await Share.open({
+                title: `Share ${file.name}`,
+                url: `file://${file.uri}`,
+                type: file.type,
+            });
+        } catch (error) {
+            console.error('Error sharing file:', error.message);
+        }
+    };
 
+    const handleEditName = () => {
+        if (!newFileName.trim()) {
+            alert('File name cannot be empty.');
+            return;
+        }
+
+        const updatedFiles = files.map((file) =>
+            file.id === selectedFile.id ? { ...file, name: newFileName } : file
+        );
+        setFiles(updatedFiles);
+        saveFiles(updatedFiles);
+        setEditModalVisible(false);
+        setNewFileName('');
+    };
+
+    
     const renderFileItem = ({ item }) => {
-        const renderRightActions = () => (
-            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveFile(item.id)}>
-                <Text style={styles.removeButtonText}>X</Text>
-            </TouchableOpacity>
-            
+        const renderRightActions = (progress, dragX) => (
+            <View style={styles.rightActionsContainer}>
+                {/* Edit Button */}
+                <TouchableOpacity onPress={() => handleEditName(item)} style={styles.actionButton1}>
+                    <Image source={require('../assets/pencil2.png') } style={styles.actionIcon} />
+                </TouchableOpacity>
+    
+                {/* Share Button */}
+                <TouchableOpacity onPress={() => handleShareFile(item)} style={styles.actionButton2}>
+                    <Image source={require('../assets/send.png')} style={styles.actionIcon} />
+                </TouchableOpacity>
+    
+                {/* Remove Button */}
+                <TouchableOpacity onPress={() => handleRemoveFile(item.id)} style={styles.actionButton3}>
+                    <Image source={require('../assets/remove.png')} style={styles.actionIcon} />
+                </TouchableOpacity>
+            </View>
         );
     
         return (
-            <Swipeable renderRightActions={renderRightActions}>
+            <Swipeable
+                renderRightActions={renderRightActions}
+                overshootRight={false} // Prevents overshooting for a cleaner swipe behavior
+            >
                 <View style={styles.fileItem}>
                     <Image
                         source={item.type && item.type.includes('audio') ? audioIcon : videoIcon}
@@ -185,10 +229,10 @@ const AudioVideoUploadScreen = () => {
                         <Text style={styles.fileName} numberOfLines={1}>
                             {item.name || 'Unknown File'}
                         </Text>
-                        <View style={styles.fileItem2}>
-                            <Image source={clockIcon} style={styles.detailIcon2} />
+                        <View style={styles.fileDetails}>
+                            <Image source={clockIcon} style={styles.detailIcon} />
                             <Text style={styles.detailText}>{item.duration}</Text>
-                            <Image source={calendarIcon} style={styles.detailIcon2} />
+                            <Image source={calendarIcon} style={styles.detailIcon} />
                             <Text style={styles.detailText}>{item.uploadedAt}</Text>
                         </View>
                     </View>
@@ -202,6 +246,7 @@ const AudioVideoUploadScreen = () => {
             </Swipeable>
         );
     };
+    
     
 
 
@@ -272,14 +317,56 @@ const styles = StyleSheet.create({
    
         marginTop: 50, // Ensures the container respects the safe area
     },
-    actionButton: {
-        position: 'absolute',
-        right: 10, // Aligns the button to the right edge of the card
-        backgroundColor: '#ffa500',
-        borderRadius: 20, // Makes it rounded
-        padding: 8,
-        elevation: 2,
+    rightActionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-evenly',
+        backgroundColor: '#5E5E5E31',
+        paddingHorizontal: 5,
+        height: '88%',
     },
+    actionButton: {
+        backgroundColor: '#FAA300',
+        borderRadius: 20,
+        padding: 10,
+        marginHorizontal: 5,
+    },
+    actionButton1: {
+        backgroundColor: '#298EF9FF',
+        borderRadius: 20,
+        padding: 10,
+        marginHorizontal: 5,
+    },
+    actionButton2: {
+        backgroundColor: '#007bff',
+        borderRadius: 20,
+        padding: 10,
+        marginHorizontal: 5,
+    },
+    actionButton3: {
+        backgroundColor: '#ff4d4d',
+        borderRadius: 20,
+        padding: 10,
+        marginHorizontal: 5,
+    },
+    actionIcon: {
+        width: 20,
+        tintColor:'#FFFFFFFF',
+        height: 20,
+        resizeMode: 'contain',
+    },
+    fileDetails: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    detailIcon: {
+        width: 14,
+        height: 14,
+        marginRight: 4,
+        resizeMode: 'contain',
+    },
+    
     removeButton: {
         backgroundColor: '#ff4d4d',
         width: 40,
@@ -388,12 +475,7 @@ const styles = StyleSheet.create({
         height: 14,
         resizeMode: 'contain',
     },
-    detailIcon: {
-        width: 34,
-        height: 34,
-        padding:5,
-        resizeMode: 'contain',
-    },
+    
     searchBar: {
         backgroundColor: '#f1f3f6',
         borderRadius: 8,

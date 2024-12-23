@@ -34,12 +34,22 @@ const TranslateScreen = ({ route }) => {
     const handleFloatingButtonPress = () => {
         console.log('Floating Button Pressed:', transcription);
         // Navigate to BotScreen2 and pass the transcription as a parameter
-        navigation.navigate('BotScreen2', { transcription });
+        if (transcription) {
+            navigation.navigate('BotScreen2', { transcription });
+        } else {
+            alert('No transcription to translate.');
+        }
+        
     };
     const handleFloatingButton2Press = () => {
         console.log('Floating Button 2 Pressed:', transcription);
         // Navigate to TranslateScreen3 and pass the transcription as a parameter
-        navigation.navigate('TranslateScreen3', { transcription });
+        if (transcription) {
+            navigation.navigate('TranslateScreen3', { transcription });
+        } else {
+            alert('No transcription to translate.');
+        }
+        
     };
 
 
